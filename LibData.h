@@ -10,18 +10,30 @@
 
 #define ShellDir "/Users/yujizhu/Documents/Git/GithubShell"
 
-static NSMutableDictionary* _dic ;
+#define CC_DEPRECATED_ATTRIBUTE __attribute__((deprecated))
 @interface LibData : NSObject
-{
-    
-}
+{}
+@property (strong) NSMutableDictionary* dic ;
 
-+ (BOOL)saveDir:(NSString*)dir AndKey:(NSString*)key;
-+ (NSMutableArray<NSString*>*)readDirs:(NSString*)key;
+- (instancetype)init;
+- (BOOL)saveDir:(NSString*)dir AndKey:(NSString*)key;
+- (NSMutableArray<NSString*>*)readDirs:(NSString*)key;
 
-+ (NSString*) getDataPath;
++ (NSString*) getPathInWrite:(NSString*)subPath;
+
++ (LibData*) getInstance;
++ (NSString*) getDataPath CC_DEPRECATED_ATTRIBUTE;
++ (NSString*) getBundle;
++ (NSString*) getWritePath;
++ (NSString*) getTempPath;
++ (NSString*) getUserDefaultFile;
++ (NSString*) getLogFile;
++ (NSInteger) getByteOfFile:(NSString *)file;
++ (NSString*) getAutoSizeOfFile:(NSString *)file;
 
 @end
+
+extern LibData *_libData;
 
 
 #endif /* Data_h */
