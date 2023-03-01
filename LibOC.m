@@ -29,5 +29,27 @@
     NSInteger index=[combo_box indexOfSelectedItem];
     [_textView setString:[combo_box itemObjectValueAtIndex:index]];
 }
+@end
+
+@implementation MyControlTextEditingDelegate
+
+- (void)controlTextDidChange:(NSNotification *)notification
+{
+    NSTextField* tf = [notification object];
+    [tf sizeToFit];
+}
+
+@end
+@implementation LibOC
+
++(NSURL *)getURLFromPasteboard:(NSPasteboard *)pasteboard {
+    NSArray *classes = @[[NSURL class]];
+    NSDictionary *options = @{};
+    if ([pasteboard canReadObjectForClasses:classes options:options]) {
+        return [pasteboard readObjectsForClasses:classes options:options].firstObject;
+    }
+    return nil;
+}
+
 
 @end

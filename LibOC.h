@@ -14,7 +14,17 @@
 @interface HistoryComboBoxDelegate : NSObject<NSComboBoxDelegate>
 {}
 @property (weak) NSTextView *textView;
-
 @end
+
+@interface MyControlTextEditingDelegate: NSObject<NSTextFieldDelegate>
+- (void)controlTextDidChange:(NSNotification *)notification;
+@end
+
+
+@interface LibOC : NSObject
++(NSURL *)getURLFromPasteboard:(NSPasteboard *)pasteboard ;
+@end
+
+
 
 #endif /* LibOC_h */
