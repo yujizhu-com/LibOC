@@ -159,4 +159,72 @@ LibData *_libData;
     }
 }
 
++ (NSArray*)  getFiles:(NSString *)path
+{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSMutableArray* files = [[NSMutableArray alloc ] init];
+    NSArray *fileNames = [fileManager contentsOfDirectoryAtPath:path error:nil];
+    for (NSString *fileName in fileNames) {
+        NSString *fullPath = [path stringByAppendingPathComponent:fileName];
+        BOOL isDir = NO;
+        if ([fileManager fileExistsAtPath:fullPath isDirectory:&isDir]) {
+           if (!isDir) {
+               if(![fileName hasPrefix:@"."])
+               {
+                   [files addObject:fileName];
+               }
+           }
+        }
+    }
+    return files;
+}
+
++ (NSArray*) getFiles:(NSString *)path andIgnoreHiddenFiles:(BOOL)ignore
+{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSMutableArray* files = [[NSMutableArray alloc ] init];
+    NSArray *fileNames = [fileManager contentsOfDirectoryAtPath:path error:nil];
+    for (NSString *fileName in fileNames)
+    {
+        NSString *fullPath = [path stringByAppendingPathComponent:fileName];
+        BOOL isDir = NO;
+        if ([fileManager fileExistsAtPath:fullPath isDirectory:&isDir])
+        {
+            if (isDir)
+            {
+                [files addObject:fullPath];
+            }
+            else
+            {
+                if([fileName hasPrefix:@"."])
+                {
+                   if(!ignore)
+                   {
+                       [files addObject:fullPath];
+                   }
+                }
+                else
+                {
+                   [files addObject:fullPath];
+                }
+            }
+        }
+    }
+    return files;
+}
+
++ (NSDictionary*)  getFilesDictInfo:(NSString *)path
+{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSDictionary* dict = [fileManager attributesOfItemAtPath:path error:nil];
+    return dict;
+}
+
++ (BOOL) isPath:(NSString*)path
+{
+    BOOL isDir = NO;
+    [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir];
+    return isDir;
+}
+
 @end

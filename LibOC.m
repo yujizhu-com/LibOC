@@ -8,7 +8,7 @@
 #import <Foundation/Foundation.h>
 #import "LibOC.h"
 
-@implementation HistoryComboBoxDelegate
+@implementation MyComboBoxDelegate
 
 - (void)comboBoxWillPopUp:(NSNotification *)notification
 {

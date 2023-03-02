@@ -11,7 +11,7 @@
 #define LibOC_h
 
 
-@interface HistoryComboBoxDelegate : NSObject<NSComboBoxDelegate>
+@interface MyComboBoxDelegate : NSObject<NSComboBoxDelegate>
 {}
 @property (weak) NSTextView *textView;
 @end

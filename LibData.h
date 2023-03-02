@@ -30,6 +30,9 @@
 + (NSString*) getLogFile;
 + (NSInteger) getByteOfFile:(NSString *)file;
 + (NSString*) getAutoSizeOfFile:(NSString *)file;
++ (NSArray*) getFiles:(NSString *)file andIgnoreHiddenFiles:(BOOL)ignore;
++ (NSDictionary*)  getFilesDictInfo:(NSString *)path;
++ (BOOL) isPath:(NSString*)path;
 
 @end
 
