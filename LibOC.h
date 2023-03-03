@@ -26,7 +26,8 @@
 +(NSString *)getFistPathFromDragInfo:(id<NSDraggingInfo>) dragInfo ;
 +(NSDragOperation)getDragOperationFromDragInfo:(id<NSDraggingInfo>) dragInfo ;
 +(void)fillImage:(NSImageView*)imageView andLabel:(NSTextField*)label ByUrl:(NSString*)url;
-
++(void)traverseParentItemsForItem:(id)item inOutlineView:(NSOutlineView *)outlineView forDomain:(NSMutableArray*)domains;
++(NSString*)pathForItem:(id)item inOutlineView:(NSOutlineView *)outlineView;
 @end
 
 

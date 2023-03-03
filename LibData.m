@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
 #import "LibData.h"
+#import "LibOC.h"
 
 @implementation LibData
 
@@ -131,6 +132,49 @@
                 }
             }
         }
+    }
+}
+
+- (NSArray*)getSubsInDirTree:(NSString*)item inOutlineView:(NSOutlineView *)outlineView
+{
+    NSMutableArray* domains = [[NSMutableArray alloc]init];
+    if(item) [LibOC traverseParentItemsForItem:(id)item inOutlineView:outlineView forDomain:domains];
+    if(domains.count>0)
+    {
+        NSDictionary* temp = _dic;
+        for(NSString* str in domains)
+        {
+            temp = [temp objectForKey:str];
+        }
+        return [temp allKeys];
+    }
+    else
+    {
+        return [_dic allKeys];
+    }
+}
+
+- (NSInteger)getSubsCountInDirTree:(NSString*)item inOutlineView:(NSOutlineView *)outlineView
+{
+    NSMutableArray* domains = [[NSMutableArray alloc]init];
+    if(item) [LibOC traverseParentItemsForItem:(id)item inOutlineView:outlineView forDomain:domains];
+    if(domains.count>0)
+    {
+        NSDictionary* temp = _dic;
+        for(NSString* str in domains)
+        {
+            id object = [temp objectForKey:str];
+            BOOL is = [object isKindOfClass:[NSDictionary class]];
+            if(is)
+                temp = object;
+            else
+                return 0;
+        }
+        return [temp count];
+    }
+    else
+    {
+        return [_dic count];
     }
 }
 

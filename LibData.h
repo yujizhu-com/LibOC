@@ -8,6 +8,8 @@
 #ifndef KitData_h
 #define KitData_h
 
+#import <Cocoa/Cocoa.h>
+
 #define ShellDir "/Users/yujizhu/Documents/Git/GithubShell"
 
 #define CC_DEPRECATED_ATTRIBUTE __attribute__((deprecated))
@@ -29,7 +31,8 @@
 - (BOOL)saveString:(NSString*)value withKey:(NSString*)key inDic:(NSString*)dic;
 - (void)saveDirTreeWithPath:(NSString*)path InDic:(NSString*)dic;
 - (void)addFilesFromFolder:(NSString *)folderPath toDictionary:(NSMutableDictionary *)dictionary;
-
+- (NSArray*)getSubsInDirTree:(NSString*)item inOutlineView:(NSOutlineView *)outlineView;
+- (NSInteger)getSubsCountInDirTree:(NSString*)item inOutlineView:(NSOutlineView *)outlineView;
 + (LibData*) libDataWithFile:(NSString*)file;
 + (NSString*) getPathInWrite:(NSString*)subPath;
 + (NSString*) getDataPath CC_DEPRECATED_ATTRIBUTE;

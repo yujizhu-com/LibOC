@@ -72,4 +72,26 @@
     NSString *str = [LibData getAutoSizeOfFile:url];
     [label setStringValue:str];
 }
+
+///Helper
++(void)traverseParentItemsForItem:(id)item inOutlineView:(NSOutlineView *)outlineView forDomain:(NSMutableArray*)domains
+{
+    [domains insertObject:item atIndex:0];
+    id parentItem = [outlineView parentForItem:item];
+    if (parentItem != nil) {
+        [LibOC traverseParentItemsForItem:parentItem inOutlineView:outlineView forDomain:domains];
+    }
+}
+
++(NSString*)pathForItem:(id)item inOutlineView:(NSOutlineView *)outlineView
+{
+    NSMutableArray* array = [NSMutableArray array];
+    [LibOC traverseParentItemsForItem:item inOutlineView:outlineView forDomain:array];
+    NSString* path = [NSString string];
+    for(NSString* domain in array)
+    {
+        path = [path stringByAppendingPathComponent:domain];
+    }
+    return path;
+}
 @end
