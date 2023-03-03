@@ -10,18 +10,8 @@
 #import "LibData.h"
 
 LibData *_libData;
-@implementation LibData{}
-
-- (instancetype)init
-{
-    self = [super init];
-    self.dic = [NSMutableDictionary dictionaryWithContentsOfFile:[LibData getUserDefaultFile]];
-    if(!self.dic)
-    {
-        self.dic = [NSMutableDictionary dictionaryWithCapacity:0];
-    }
-    return self;
-}
+LibFile *_libFile;
+@implementation LibData
 
 - (BOOL)saveDir:(NSString*)dir AndKey:(NSString*)key
 {
@@ -54,6 +44,17 @@ LibData *_libData;
     return dirs ;
 }
 
++ (LibData*) libDataFile:(NSString*)file
+{
+    LibData* libData = [[LibData alloc]init];
+    libData.dic = [NSMutableDictionary dictionaryWithContentsOfFile:file];
+    if(!libData.dic)
+    {
+        libData.dic = [NSMutableDictionary dictionaryWithCapacity:0];
+    }
+    return libData;
+}
+
 + (NSString*) getPathInWrite:(NSString*) subPath
 {
     NSString* path = [LibData getWritePath];
@@ -65,15 +66,6 @@ LibData *_libData;
         [fm createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil];
     }
     return path;
-}
-
-+ (LibData*) getInstance
-{
-    if(!_libData)
-    {
-        _libData = [[LibData alloc]init];
-    }
-    return _libData;
 }
 
 + (NSString*) getDataPath
@@ -159,27 +151,7 @@ LibData *_libData;
     }
 }
 
-+ (NSArray*)  getFiles:(NSString *)path
-{
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSMutableArray* files = [[NSMutableArray alloc ] init];
-    NSArray *fileNames = [fileManager contentsOfDirectoryAtPath:path error:nil];
-    for (NSString *fileName in fileNames) {
-        NSString *fullPath = [path stringByAppendingPathComponent:fileName];
-        BOOL isDir = NO;
-        if ([fileManager fileExistsAtPath:fullPath isDirectory:&isDir]) {
-           if (!isDir) {
-               if(![fileName hasPrefix:@"."])
-               {
-                   [files addObject:fileName];
-               }
-           }
-        }
-    }
-    return files;
-}
-
-+ (NSArray*) getFiles:(NSString *)path andIgnoreHiddenFiles:(BOOL)ignore
++ (NSArray*) getFiles:(NSString *)path andIgnoreHidden:(BOOL)ignore withSuffix:(NSArray*)suffixes ignoreEmptyDir:(BOOL)ignoreEmptyDir
 {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSMutableArray* files = [[NSMutableArray alloc ] init];
@@ -192,7 +164,18 @@ LibData *_libData;
         {
             if (isDir)
             {
-                [files addObject:fullPath];
+                if(ignoreEmptyDir)
+                {
+                    NSArray* innerFiles = [LibData getFiles:fullPath andIgnoreHidden:ignore withSuffix:suffixes ignoreEmptyDir:ignoreEmptyDir];
+                    if([innerFiles count]>0)
+                    {
+                        [files addObject:fullPath];
+                    }
+                }
+                else
+                {
+                    [files addObject:fullPath];
+                }
             }
             else
             {
@@ -203,9 +186,22 @@ LibData *_libData;
                        [files addObject:fullPath];
                    }
                 }
-                else
+                else 
                 {
-                   [files addObject:fullPath];
+                    BOOL legalSuffix = YES;
+                    if([suffixes count]>0)
+                    {
+                        legalSuffix = NO;
+                        for(NSString* s in suffixes)
+                        {
+                            legalSuffix = [fullPath hasSuffix:s];
+                            if(legalSuffix) break;
+                        }
+                    }
+                    if(legalSuffix)
+                    {
+                        [files addObject:fullPath];
+                    }
                 }
             }
         }
@@ -213,18 +209,150 @@ LibData *_libData;
     return files;
 }
 
-+ (NSDictionary*)  getFilesDictInfo:(NSString *)path
-{
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSDictionary* dict = [fileManager attributesOfItemAtPath:path error:nil];
-    return dict;
-}
 
 + (BOOL) isPath:(NSString*)path
 {
     BOOL isDir = NO;
     [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir];
     return isDir;
+}
+
+@end
+
+@implementation LibFile
+
++ (LibFile*) getInstance
+{
+    if(!_libFile)
+    {
+        _libFile = [[LibFile alloc]init];
+    }
+    return _libFile;
+}
+
+- (instancetype)init
+{
+    self = [super init];
+    self.legalSuffixes=nil;
+    self.ignoreHidden=YES;
+    self.ignoreEmptyDir=YES;
+    return self;
+}
+
+-(NSArray*) getFiles:(NSString *)path
+{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSMutableArray* files = [[NSMutableArray alloc ] init];
+    NSArray *fileNames = [fileManager contentsOfDirectoryAtPath:path error:nil];
+    for (NSString *fileName in fileNames)
+    {
+        NSString *fullPath = [path stringByAppendingPathComponent:fileName];
+        BOOL isDir = NO;
+        if ([fileManager fileExistsAtPath:fullPath isDirectory:&isDir])
+        {
+            if (isDir)
+            {
+                if(_ignoreEmptyDir)
+                {
+                    NSArray* innerFiles = [self getFiles:fullPath];
+                    if([innerFiles count]>0)
+                    {
+                        [files addObject:fullPath];
+                    }
+                }
+                else
+                {
+                    [files addObject:fullPath];
+                }
+            }
+            else
+            {
+                if([fileName hasPrefix:@"."])
+                {
+                   if(!_ignoreHidden)
+                   {
+                       [files addObject:fullPath];
+                   }
+                }
+                else
+                {
+                    BOOL legalSuffix = YES;
+                    if([_legalSuffixes count]>0)
+                    {
+                        legalSuffix = NO;
+                        for(NSString* s in _legalSuffixes)
+                        {
+                            legalSuffix = [fullPath hasSuffix:s];
+                            if(legalSuffix) break;
+                        }
+                    }
+                    if(legalSuffix)
+                    {
+                        [files addObject:fullPath];
+                    }
+                }
+            }
+        }
+    }
+    return files;
+}
+
+- (NSInteger) getSubPathCount:(NSString *)path
+{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSInteger count=0;
+    NSArray *fileNames = [fileManager contentsOfDirectoryAtPath:path error:nil];
+    for (NSString *fileName in fileNames)
+    {
+        NSString *fullPath = [path stringByAppendingPathComponent:fileName];
+        BOOL isDir = NO;
+        if ([fileManager fileExistsAtPath:fullPath isDirectory:&isDir])
+        {
+            if (isDir)
+            {
+                if(_ignoreEmptyDir)
+                {
+                    NSInteger subcount = [self getSubPathCount:fullPath];
+                    if(subcount>0)
+                    {
+                        ++count;
+                    }
+                }
+                else
+                {
+                    ++count;
+                }
+            }
+            else
+            {
+                if([fileName hasPrefix:@"."])
+                {
+                   if(!_ignoreHidden)
+                   {
+                       ++count;
+                   }
+                }
+                else
+                {
+                    BOOL legalSuffix = YES;
+                    if([_legalSuffixes count]>0)
+                    {
+                        legalSuffix = NO;
+                        for(NSString* s in _legalSuffixes)
+                        {
+                            legalSuffix = [fullPath hasSuffix:s];
+                            if(legalSuffix) break;
+                        }
+                    }
+                    if(legalSuffix)
+                    {
+                        ++count;
+                    }
+                }
+            }
+        }
+    }
+    return count;
 }
 
 @end

@@ -23,6 +23,7 @@
 
 @interface LibOC : NSObject
 +(NSURL *)getURLFromPasteboard:(NSPasteboard *)pasteboard ;
++(void)fillImage:(NSImageView*)imageView andLabel:(NSTextField*)label ByUrl:(NSString*)url;
 @end
 
 

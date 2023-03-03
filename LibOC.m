@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "LibOC.h"
+#import "LibData.h"
 
 @implementation MyComboBoxDelegate
 
@@ -51,5 +52,10 @@
     return nil;
 }
 
-
++(void)fillImage:(NSImageView*)imageView andLabel:(NSTextField*)label ByUrl:(NSString*)url
+{
+    if(imageView) imageView.image = [[NSImage alloc] initWithContentsOfFile:url];
+    NSString *str = [LibData getAutoSizeOfFile:url];
+    [label setStringValue:str];
+}
 @end

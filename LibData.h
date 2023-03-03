@@ -15,13 +15,11 @@
 {}
 @property (strong) NSMutableDictionary* dic ;
 
-- (instancetype)init;
 - (BOOL)saveDir:(NSString*)dir AndKey:(NSString*)key;
 - (NSMutableArray<NSString*>*)readDirs:(NSString*)key;
 
++ (LibData*) libDataFile:(NSString*)file;
 + (NSString*) getPathInWrite:(NSString*)subPath;
-
-+ (LibData*) getInstance;
 + (NSString*) getDataPath CC_DEPRECATED_ATTRIBUTE;
 + (NSString*) getBundle;
 + (NSString*) getWritePath;
@@ -30,12 +28,26 @@
 + (NSString*) getLogFile;
 + (NSInteger) getByteOfFile:(NSString *)file;
 + (NSString*) getAutoSizeOfFile:(NSString *)file;
-+ (NSArray*) getFiles:(NSString *)file andIgnoreHiddenFiles:(BOOL)ignore;
-+ (NSDictionary*)  getFilesDictInfo:(NSString *)path;
++ (NSArray*) getFiles:(NSString *)path
+ andIgnoreHidden:(BOOL)ignore
+           withSuffix:(NSArray*)suffixes
+          ignoreEmptyDir:(BOOL)ignoreEmptyDir;
 + (BOOL) isPath:(NSString*)path;
 
 @end
 
+@interface LibFile : NSObject
+- (instancetype)init;
+- (NSArray*) getFiles:(NSString *)path;
+- (NSInteger) getSubPathCount:(NSString *)path;
+
+@property (strong) NSArray* legalSuffixes;
+@property BOOL ignoreEmptyDir;
+@property BOOL ignoreHidden;
+
+@end
+
+extern LibFile *_libFile;
 extern LibData *_libData;
 
 
