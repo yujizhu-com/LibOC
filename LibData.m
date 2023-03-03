@@ -77,6 +77,11 @@
         NSMutableDictionary *directoryDict = [NSMutableDictionary dictionary];
         [self addFilesFromFolder:path toDictionary:directoryDict];
         [_dic setObject:directoryDict forKey:dic];
+        if(directoryDict.count<=0)
+        {
+            [_dic removeObjectForKey:path];
+        }
+        
     }
     else
     {
@@ -96,12 +101,16 @@
             NSMutableDictionary *subdirDict = [NSMutableDictionary dictionary];
             [dictionary setObject:subdirDict forKey:fileName];
             [self addFilesFromFolder:fullPath toDictionary:subdirDict];
+            if(subdirDict.count<=0)
+            {
+                [dictionary removeObjectForKey:fileName];
+            }
         } else {
             if([fileName hasPrefix:@"."])
             {
                if(!_ignoreHidden)
                {
-                   [dictionary setObject:@YES forKey:folderPath];
+                   [dictionary setObject:@YES forKey:fileName];
                }
             }
             else
@@ -118,7 +127,7 @@
                 }
                 if(legalSuffix)
                 {
-                    [dictionary setObject:@YES forKey:folderPath];
+                    [dictionary setObject:@YES forKey:fileName];
                 }
             }
         }
