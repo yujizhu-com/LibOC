@@ -9,11 +9,10 @@
 #import <CoreData/CoreData.h>
 #import "LibData.h"
 
-LibData *_libData;
-LibFile *_libFile;
 @implementation LibData
 
-- (BOOL)saveDir:(NSString*)dir AndKey:(NSString*)key
+#pragma mark - Array -
+- (BOOL)saveString:(NSString*)dir InArray:(NSString*)key
 {
     if(![dir length]) return false;
     BOOL saved = false;
@@ -28,7 +27,7 @@ LibFile *_libFile;
         {
             saved = true;
             [obj addObject:dir];
-            [self.dic writeToFile:[LibData getUserDefaultFile] atomically:false];
+            [self.dic writeToFile:_file atomically:false];
         }
         else
         {
@@ -38,15 +37,98 @@ LibFile *_libFile;
     return saved;
 }
 
-- (NSMutableArray<NSString*>*)readDirs:(NSString*)key
+- (NSMutableArray<NSString*>*)readAllStringInArray:(NSString*)key
 {
     NSMutableArray<NSString*>* dirs = [self.dic objectForKey:key];
     return dirs ;
 }
 
-+ (LibData*) libDataFile:(NSString*)file
+#pragma mark - Dict -
+
+-(NSMutableDictionary*) readDic:(NSString*)dictName
+{
+    NSMutableDictionary *dict = [_dic objectForKey:dictName];
+    if(!dict)
+    {
+        dict = [NSMutableDictionary dictionary];
+    }
+    return dict;
+}
+
+- (BOOL)saveString:(NSString*)value withKey:(NSString*)key inDic:(NSString*)dic
+{
+    NSMutableDictionary *directoryDict = [_dic objectForKey:key];
+    if(!directoryDict)
+    {
+        directoryDict = [NSMutableDictionary dictionary];
+    }
+    [directoryDict setObject:value forKey:key];
+    [_dic setObject:directoryDict forKey:dic];
+    [_dic writeToFile:_file atomically:false];
+    return YES;
+}
+
+- (void)saveDirTreeWithPath:(NSString*)path InDic:(NSString*)dic
+{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    BOOL isDir;
+    if ([fileManager fileExistsAtPath:path isDirectory:&isDir] && isDir)
+    {
+        NSMutableDictionary *directoryDict = [NSMutableDictionary dictionary];
+        [self addFilesFromFolder:path toDictionary:directoryDict];
+        [_dic setObject:directoryDict forKey:dic];
+    }
+    else
+    {
+        [_dic setObject:@YES forKey:path];
+    }
+    [_dic writeToFile:_file atomically:false];
+}
+
+- (void)addFilesFromFolder:(NSString *)folderPath toDictionary:(NSMutableDictionary *)dictionary
+{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSArray *fileList = [fileManager contentsOfDirectoryAtPath:folderPath error:nil];
+    for (NSString *fileName in fileList) {
+        NSString *fullPath = [folderPath stringByAppendingPathComponent:fileName];
+        BOOL isDir;
+        if ([fileManager fileExistsAtPath:fullPath isDirectory:&isDir] && isDir) {
+            NSMutableDictionary *subdirDict = [NSMutableDictionary dictionary];
+            [dictionary setObject:subdirDict forKey:fileName];
+            [self addFilesFromFolder:fullPath toDictionary:subdirDict];
+        } else {
+            if([fileName hasPrefix:@"."])
+            {
+               if(!_ignoreHidden)
+               {
+                   [dictionary setObject:@YES forKey:folderPath];
+               }
+            }
+            else
+            {
+                BOOL legalSuffix = YES;
+                if([_legalSuffixes count]>0)
+                {
+                    legalSuffix = NO;
+                    for(NSString* s in _legalSuffixes)
+                    {
+                        legalSuffix = [fileName hasSuffix:s];
+                        if(legalSuffix) break;
+                    }
+                }
+                if(legalSuffix)
+                {
+                    [dictionary setObject:@YES forKey:folderPath];
+                }
+            }
+        }
+    }
+}
+
++ (LibData*) libDataWithFile:(NSString*)file
 {
     LibData* libData = [[LibData alloc]init];
+    libData.file = file;
     libData.dic = [NSMutableDictionary dictionaryWithContentsOfFile:file];
     if(!libData.dic)
     {
@@ -220,15 +302,6 @@ LibFile *_libFile;
 @end
 
 @implementation LibFile
-
-+ (LibFile*) getInstance
-{
-    if(!_libFile)
-    {
-        _libFile = [[LibFile alloc]init];
-    }
-    return _libFile;
-}
 
 - (instancetype)init
 {

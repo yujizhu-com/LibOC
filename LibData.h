@@ -14,11 +14,23 @@
 @interface LibData : NSObject
 {}
 @property (strong) NSMutableDictionary* dic ;
+@property (strong) NSString* file ;
 
-- (BOOL)saveDir:(NSString*)dir AndKey:(NSString*)key;
-- (NSMutableArray<NSString*>*)readDirs:(NSString*)key;
+- (BOOL)saveString:(NSString*)dir InArray:(NSString*)key;
+- (NSMutableArray<NSString*>*)readAllStringInArray:(NSString*)key;
 
-+ (LibData*) libDataFile:(NSString*)file;
+
+
+@property (strong) NSArray* legalSuffixes;
+@property BOOL ignoreEmptyDir;
+@property BOOL ignoreHidden;
+
+-(NSMutableDictionary*) readDic:(NSString*)dic;
+- (BOOL)saveString:(NSString*)value withKey:(NSString*)key inDic:(NSString*)dic;
+- (void)saveDirTreeWithPath:(NSString*)path InDic:(NSString*)dic;
+- (void)addFilesFromFolder:(NSString *)folderPath toDictionary:(NSMutableDictionary *)dictionary;
+
++ (LibData*) libDataWithFile:(NSString*)file;
 + (NSString*) getPathInWrite:(NSString*)subPath;
 + (NSString*) getDataPath CC_DEPRECATED_ATTRIBUTE;
 + (NSString*) getBundle;
@@ -46,9 +58,5 @@
 @property BOOL ignoreHidden;
 
 @end
-
-extern LibFile *_libFile;
-extern LibData *_libData;
-
 
 #endif /* Data_h */

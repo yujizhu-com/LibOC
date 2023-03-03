@@ -22,8 +22,11 @@
 
 
 @interface LibOC : NSObject
-+(NSURL *)getURLFromPasteboard:(NSPasteboard *)pasteboard ;
+
++(NSString *)getFistPathFromDragInfo:(id<NSDraggingInfo>) dragInfo ;
++(NSDragOperation)getDragOperationFromDragInfo:(id<NSDraggingInfo>) dragInfo ;
 +(void)fillImage:(NSImageView*)imageView andLabel:(NSTextField*)label ByUrl:(NSString*)url;
+
 @end
 
 

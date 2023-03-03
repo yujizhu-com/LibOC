@@ -43,13 +43,27 @@
 @end
 @implementation LibOC
 
-+(NSURL *)getURLFromPasteboard:(NSPasteboard *)pasteboard {
++(NSString *)getFistPathFromDragInfo:(id<NSDraggingInfo>) dragInfo {
+    NSPasteboard *pasteboard = [dragInfo draggingPasteboard];
     NSArray *classes = @[[NSURL class]];
     NSDictionary *options = @{};
     if ([pasteboard canReadObjectForClasses:classes options:options]) {
-        return [pasteboard readObjectsForClasses:classes options:options].firstObject;
+        NSURL *url = [pasteboard readObjectsForClasses:classes options:options].firstObject;
+        NSString* path = [url path];
+        return path;
     }
     return nil;
+}
+
++(NSDragOperation)getDragOperationFromDragInfo:(id<NSDraggingInfo>) dragInfo
+{
+    if ([dragInfo draggingSource] != self) {
+        NSArray *draggedTypes = [[dragInfo draggingPasteboard] types];
+        if ([draggedTypes containsObject:NSPasteboardTypeFileURL]) {
+            return NSDragOperationCopy;
+        }
+    }
+    return NSDragOperationNone;
 }
 
 +(void)fillImage:(NSImageView*)imageView andLabel:(NSTextField*)label ByUrl:(NSString*)url
