@@ -18,21 +18,16 @@
     if(![dir length]) return false;
     BOOL saved = false;
     {
-        NSMutableArray* obj = [self.dic objectForKey:key];
-        if(!obj)
+        NSMutableArray* obj = [LibData safeArray:_dic forKey:key];
+        if([obj containsObject:dir])
         {
-            [self.dic setObject:[NSMutableArray arrayWithCapacity:0] forKey:key];
-            obj = [self.dic objectForKey:key];
+            saved = false;
         }
-        if(![obj containsObject:dir])
+        else
         {
             saved = true;
             [obj addObject:dir];
             [self.dic writeToFile:_file atomically:false];
-        }
-        else
-        {
-            saved = false;
         }
     }
     return saved;
@@ -44,15 +39,17 @@
     return dirs ;
 }
 
+- (NSString*)readLastInArray:(NSString*)key
+{
+    NSMutableArray<NSString*>* dirs = [self.dic objectForKey:key];
+    return [dirs lastObject] ;
+}
+
 #pragma mark - Dict -
 
 -(NSMutableDictionary*) readDic:(NSString*)dictName
 {
-    NSMutableDictionary *dict = [_dic objectForKey:dictName];
-    if(!dict)
-    {
-        dict = [NSMutableDictionary dictionary];
-    }
+    NSMutableDictionary *dict = [LibData safeDict:_dic forKey:dictName];
     return dict;
 }
 
@@ -72,21 +69,20 @@
 - (void)saveDirTreeWithPath:(NSString*)path InDic:(NSString*)dic
 {
     NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSMutableDictionary *dicChilds = [LibData safeDict:_dic forKey:@"Childs"];
+    [dicChilds setObject:[NSMutableDictionary dictionary] forKey:path]; ///增加一个节点
     BOOL isDir;
+    BOOL erase=NO;
     if ([fileManager fileExistsAtPath:path isDirectory:&isDir] && isDir)
     {
-        NSMutableDictionary *directoryDict = [NSMutableDictionary dictionary];
-        [self addFilesFromFolder:path toDictionary:directoryDict];
-        [_dic setObject:directoryDict forKey:dic];
-        if(directoryDict.count<=0)
-        {
-            [_dic removeObjectForKey:path];
-        }
-        
+        NSMutableDictionary *dir = [dicChilds objectForKey:path];
+        NSMutableDictionary *dirChilds = [LibData safeDict:dir forKey:@"Childs"];
+        [self addFilesFromFolder:path toDictionary:dirChilds];
+        erase = dirChilds.count <=0;
     }
-    else
+    if(erase)
     {
-        [_dic setObject:@YES forKey:path];
+        [dicChilds removeObjectForKey:path];
     }
     [_dic writeToFile:_file atomically:false];
 }
@@ -97,95 +93,164 @@
     NSArray *fileList = [fileManager contentsOfDirectoryAtPath:folderPath error:nil];
     for (NSString *fileName in fileList) {
         NSString *fullPath = [folderPath stringByAppendingPathComponent:fileName];
+        NSMutableDictionary *node = [LibData safeDict:dictionary forKey:fileName];
         BOOL isDir;
+        BOOL erase = NO;
         if ([fileManager fileExistsAtPath:fullPath isDirectory:&isDir] && isDir) {
-            NSMutableDictionary *subdirDict = [NSMutableDictionary dictionary];
-            [dictionary setObject:subdirDict forKey:fileName];
-            [self addFilesFromFolder:fullPath toDictionary:subdirDict];
-            if(subdirDict.count<=0)
-            {
-                [dictionary removeObjectForKey:fileName];
-            }
+            NSMutableDictionary *nodeChild = [LibData safeDict:node forKey:@"Childs"];
+            [self addFilesFromFolder:fullPath toDictionary:nodeChild];
+            erase = nodeChild.count <=0;
         } else {
-            if([fileName hasPrefix:@"."])
+            if(_ignoreHidden && [fileName hasPrefix:@"."])
             {
-               if(!_ignoreHidden)
-               {
-                   [dictionary setObject:@YES forKey:fileName];
-               }
+                erase = YES ;
             }
             else
             {
                 BOOL legalSuffix = YES;
                 if([_legalSuffixes count]>0)
                 {
-                    legalSuffix = NO;
-                    for(NSString* s in _legalSuffixes)
-                    {
-                        legalSuffix = [fileName hasSuffix:s];
-                        if(legalSuffix) break;
-                    }
+                    NSString* suffix = [fileName pathExtension];
+                    legalSuffix =  [_legalSuffixes containsObject:suffix];
                 }
-                if(legalSuffix)
+                if(!legalSuffix)
                 {
-                    [dictionary setObject:@YES forKey:fileName];
+                    erase = YES ;
                 }
             }
         }
+        if(erase)
+        {
+            [dictionary removeObjectForKey:fileName];
+        }
     }
 }
 
-- (NSArray*)getSubsInDirTree:(NSString*)item inOutlineView:(NSOutlineView *)outlineView
+- (NSArray*)getSubsInDirTree:(NSString*)item
 {
     NSMutableArray* domains = [[NSMutableArray alloc]init];
-    if(item) [LibOC traverseParentItemsForItem:(id)item inOutlineView:outlineView forDomain:domains];
+    if(item) [LibOC traverseParentItemsForItem:(id)item inOutlineView:_outlineView forDomain:domains];
+    NSDictionary* childs =  [_dic objectForKey:@"Childs"];
     if(domains.count>0)
     {
-        NSDictionary* temp = _dic;
         for(NSString* str in domains)
         {
-            temp = [temp objectForKey:str];
+            NSDictionary* node = [childs objectForKey:str];
+            childs = [node objectForKey:@"Childs"];
         }
-        return [temp allKeys];
     }
-    else
-    {
-        return [_dic allKeys];
-    }
+    return [childs allKeys];
 }
 
-- (NSInteger)getSubsCountInDirTree:(NSString*)item inOutlineView:(NSOutlineView *)outlineView
+- (NSInteger)getSubsCountInDirTree:(NSString*)item
 {
     NSMutableArray* domains = [[NSMutableArray alloc]init];
-    if(item) [LibOC traverseParentItemsForItem:(id)item inOutlineView:outlineView forDomain:domains];
+    if(item) [LibOC traverseParentItemsForItem:(id)item inOutlineView:_outlineView forDomain:domains];
+    NSDictionary* childs =  [_dic objectForKey:@"Childs"];
     if(domains.count>0)
     {
-        NSDictionary* temp = _dic;
         for(NSString* str in domains)
         {
-            id object = [temp objectForKey:str];
-            BOOL is = [object isKindOfClass:[NSDictionary class]];
-            if(is)
-                temp = object;
-            else
-                return 0;
+            NSDictionary* node = [childs objectForKey:str];
+            childs = [node objectForKey:@"Childs"];
         }
-        return [temp count];
     }
-    else
-    {
-        return [_dic count];
-    }
+    return [childs count];
 }
+
+- (NSMutableDictionary*)getNode:(NSString*)item
+{
+    NSMutableArray* domains = [[NSMutableArray alloc]init];
+    if(item) [LibOC traverseParentItemsForItem:(id)item inOutlineView:_outlineView forDomain:domains];
+    NSMutableDictionary* node = nil;
+    if([item isEqualToString:@"__System__"])
+    {
+        node =  _dic;
+    }
+    else if(domains.count>0)
+    {
+        NSMutableDictionary* childs = [_dic objectForKey:@"Childs"];
+        for(NSString* str in domains)
+        {
+            node = [childs objectForKey:str];
+            childs = [node objectForKey:@"Childs"];
+        }
+    }
+    return node;
+}
+
++ (NSMutableDictionary*)safeDict:(NSMutableDictionary*)node forKey:(NSString*)key
+{
+    if(![node objectForKey:key])
+    {
+        [node setObject:[NSMutableDictionary dictionary] forKey:key]; ///子节点列表
+    }
+    NSMutableDictionary *value = [node objectForKey:key];
+    return value;
+}
+
++ (NSMutableArray*)safeArray:(NSMutableDictionary*)node forKey:(NSString*)key
+{
+    if(![node objectForKey:key])
+    {
+        [node setObject:[NSMutableArray array] forKey:key]; ///子节点列表
+    }
+    NSMutableArray *value = [node objectForKey:key];
+    return value;
+}
+
+- (NSString*)getNodeProperty:(NSString*)item forKey:(NSString*)key withValue:(NSString*)defaultValue
+{
+    NSMutableDictionary* node = [self getNode:item];
+    NSString* value = nil;
+    if(node)
+    {
+        NSMutableDictionary* property = [LibData safeDict:node forKey:@"Property"];
+        value = [property objectForKey:key];
+        if(!value)
+        {
+            value = defaultValue;
+        }
+    }
+    return value;
+}
+
+- (void)saveNodeProperty:(NSString*)item forKey:(NSString*)key withValue:(NSString*)value
+{
+    NSMutableDictionary* node = [self getNode:item];
+    if(node)
+    {
+        NSMutableDictionary* property = [LibData safeDict:node forKey:@"Property"];
+        [property setObject:value forKey:key];
+    }
+    [self save];
+}
+
+///另存为
+- (void)saveTo:(NSString*)file
+{
+    [_dic writeToFile:file atomically:false];
+}
+
+- (void)save
+{
+    [_dic writeToFile:_file atomically:false];
+}
+
+
+
 
 + (LibData*) libDataWithFile:(NSString*)file
 {
     LibData* libData = [[LibData alloc]init];
-    libData.file = file;
-    libData.dic = [NSMutableDictionary dictionaryWithContentsOfFile:file];
-    if(!libData.dic)
+    if(file && file.length)
     {
-        libData.dic = [NSMutableDictionary dictionaryWithCapacity:0];
+        libData.file = file;
+        libData.dic = [NSMutableDictionary dictionaryWithContentsOfFile:file];
+        if(!libData.dic)
+        {
+            libData.dic = [NSMutableDictionary dictionary];
+        }
     }
     return libData;
 }
@@ -237,16 +302,16 @@
 {
     NSString* dir = [LibData getWritePath];
     NSString* file = [NSString stringWithFormat:@"%@%@",[LibData getBundle],@".txt"];
-    dir = [dir stringByAppendingPathComponent:file];
-    return file;
+    NSString* fullPath = [dir stringByAppendingPathComponent:file];
+    return fullPath;
 }
 
 + (NSString*) getLogFile
 {
     NSString* dir = [LibData getWritePath];
     NSString* file = [NSString stringWithFormat:@"log.txt"];
-    dir = [dir stringByAppendingPathComponent:file];
-    return file;
+    NSString* fullPath = [dir stringByAppendingPathComponent:file];
+    return fullPath;
 }
 
 + (NSInteger)getByteOfFile:(NSString *)file
@@ -272,17 +337,17 @@
     if(MB>0)
     {
         r=B/1000000.0;
-        return [NSString stringWithFormat:@"%.2f MB",r];
+        return [NSString stringWithFormat:@"%.2f M",r];
     }
     else if(KB>0)
     {
         r=B/1000.0;
-        return [NSString stringWithFormat:@"%.2f KB",r];
+        return [NSString stringWithFormat:@"%.2f K",r];
     }
     else
     {
         r=B;
-        return [NSString stringWithFormat:@"%.2f byte",r];
+        return [NSString stringWithFormat:@"%.2f Byte",r];
     }
 }
 
@@ -327,11 +392,8 @@
                     if([suffixes count]>0)
                     {
                         legalSuffix = NO;
-                        for(NSString* s in suffixes)
-                        {
-                            legalSuffix = [fullPath hasSuffix:s];
-                            if(legalSuffix) break;
-                        }
+                        NSString* suffix = [fileName pathExtension];
+                        legalSuffix =  [suffixes containsObject:suffix];
                     }
                     if(legalSuffix)
                     {
@@ -406,11 +468,8 @@
                     if([_legalSuffixes count]>0)
                     {
                         legalSuffix = NO;
-                        for(NSString* s in _legalSuffixes)
-                        {
-                            legalSuffix = [fullPath hasSuffix:s];
-                            if(legalSuffix) break;
-                        }
+                        NSString* suffix = [fileName pathExtension];
+                        legalSuffix =  [_legalSuffixes containsObject:suffix];
                     }
                     if(legalSuffix)
                     {
@@ -464,11 +523,8 @@
                     if([_legalSuffixes count]>0)
                     {
                         legalSuffix = NO;
-                        for(NSString* s in _legalSuffixes)
-                        {
-                            legalSuffix = [fullPath hasSuffix:s];
-                            if(legalSuffix) break;
-                        }
+                        NSString* suffix = [fileName pathExtension];
+                        legalSuffix =  [_legalSuffixes containsObject:suffix];
                     }
                     if(legalSuffix)
                     {

@@ -11,8 +11,7 @@
 #define LibOC_h
 
 
-@interface MyComboBoxDelegate : NSObject<NSComboBoxDelegate>
-{}
+@interface HistoryComboBoxDelegate : NSObject<NSComboBoxDelegate>
 @property (weak) NSTextView *textView;
 @end
 
@@ -28,6 +27,9 @@
 +(void)fillImage:(NSImageView*)imageView andLabel:(NSTextField*)label ByUrl:(NSString*)url;
 +(void)traverseParentItemsForItem:(id)item inOutlineView:(NSOutlineView *)outlineView forDomain:(NSMutableArray*)domains;
 +(NSString*)pathForItem:(id)item inOutlineView:(NSOutlineView *)outlineView;
++(void)traverseOutlineView:(NSOutlineView *)outlineView usingBlock:(void(^)(NSOutlineView*,id item))block ;
++(void)traverseItem:(id)item inView:(NSOutlineView *)outlineView usingBlock:(void(^)(NSOutlineView*,id item))block;
+
 @end
 
 

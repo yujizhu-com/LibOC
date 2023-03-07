@@ -9,7 +9,8 @@
 #import "LibOC.h"
 #import "LibData.h"
 
-@implementation MyComboBoxDelegate
+#pragma mark - HistoryComboBoxDelegate -
+@implementation HistoryComboBoxDelegate
 
 - (void)comboBoxWillPopUp:(NSNotification *)notification
 {
@@ -31,6 +32,8 @@
     [_textView setString:[combo_box itemObjectValueAtIndex:index]];
 }
 @end
+
+#pragma mark - NormalComboBoxDelegate -
 
 @implementation MyControlTextEditingDelegate
 
@@ -94,4 +97,27 @@
     }
     return path;
 }
+
++(void)traverseOutlineView:(NSOutlineView *)outlineView
+                usingBlock:(void(^)(NSOutlineView*,id item))block
+{
+    NSInteger numberOfChildren = [outlineView numberOfChildrenOfItem:nil];
+    for (NSInteger i = 0; i < numberOfChildren; i++) {
+        id item = [outlineView child:i ofItem:nil];
+        [self traverseItem:item inView:outlineView usingBlock:block];
+    }
+}
+
++(void)traverseItem:(id)item
+             inView:(NSOutlineView *)outlineView
+         usingBlock:(void(^)(NSOutlineView*,id item))block
+{
+    block(outlineView,item);
+    NSInteger numberOfChildren = [outlineView numberOfChildrenOfItem:item];
+    for (NSInteger i = 0; i < numberOfChildren; i++) {
+        id childItem = [outlineView child:i ofItem:item];
+        [self traverseItem:childItem inView:outlineView usingBlock:block];
+    }
+}
+
 @end
