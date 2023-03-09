@@ -42,8 +42,8 @@
     NSTextField* tf = [notification object];
     [tf sizeToFit];
 }
-
 @end
+
 @implementation LibOC
 
 +(NSString *)getFistPathFromDragInfo:(id<NSDraggingInfo>) dragInfo {
@@ -79,9 +79,9 @@
 ///Helper
 +(void)traverseParentItemsForItem:(id)item inOutlineView:(NSOutlineView *)outlineView forDomain:(NSMutableArray*)domains
 {
-    [domains insertObject:item atIndex:0];
+    if(item) [domains insertObject:item atIndex:0];
     id parentItem = [outlineView parentForItem:item];
-    if (parentItem != nil) {
+    if (parentItem) {
         [LibOC traverseParentItemsForItem:parentItem inOutlineView:outlineView forDomain:domains];
     }
 }
@@ -95,7 +95,29 @@
     {
         path = [path stringByAppendingPathComponent:domain];
     }
-    return path;
+    BOOL isDir;
+    if([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir] && isDir)
+    {
+        return path;
+    }
+    return nil;
+}
+
++(NSString*)fileForItem:(id)item inOutlineView:(NSOutlineView *)outlineView
+{
+    NSMutableArray* domain = [NSMutableArray array];
+    [LibOC traverseParentItemsForItem:item inOutlineView:outlineView forDomain:domain];
+    NSMutableString* path = [NSMutableString string];
+    for(NSString* sub in domain)
+    {
+        [path appendString:sub];
+    }
+    BOOL isDir;
+    if([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir] && !isDir)
+    {
+        return path;
+    }
+    return nil;
 }
 
 +(void)traverseOutlineView:(NSOutlineView *)outlineView
@@ -120,4 +142,56 @@
     }
 }
 
++(void)getIndex:(NSInteger*)index andParent:(NSMutableString*)parent andItem:(NSMutableString*)item
+  ByOutlineView:(NSOutlineView*)view
+{
+    NSInteger selectedRow = view.selectedRow;
+    if (selectedRow != -1)
+    {
+        NSInteger row = [view selectedRow];
+        [item setString:[view itemAtRow:row]];
+        NSString* parentItem = [view parentForItem:item];
+        if(parentItem)
+        {
+            [parent setString:parentItem];
+        }
+        *index = [view childIndexForItem:item];
+    }
+}
+
++(NSString*)getSelectedItem:(NSOutlineView*)view
+{
+    NSInteger selectedRow = view.selectedRow;
+    if (selectedRow != -1)
+    {
+        NSInteger row = [view selectedRow];
+        return [view itemAtRow:row];
+    }
+    return nil;
+}
+
++(void)checkDirExistForTextField:(NSTextField*)field
+{
+    NSString* path = [field stringValue];
+    
+}
++(void)setCombobox:(NSComboBox*)box withItems:(NSArray*)items atItem:(NSString*)item
+{
+    [box removeAllItems];
+    [box addItemsWithObjectValues:items];
+    [box setEditable:NO];
+    [box setSelectable:NO];
+    NSInteger index = [items indexOfObject:item];
+    if (index == NSNotFound) {
+        index = 0;
+    }
+    if(!item || item.length == 0)
+    {
+        [box selectItemAtIndex:0];
+    }
+    else
+    {
+        [box selectItemWithObjectValue:item];
+    }
+}
 @end

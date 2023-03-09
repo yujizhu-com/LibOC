@@ -126,57 +126,90 @@
     }
 }
 
-- (NSArray*)getSubsInDirTree:(NSString*)item
+- (NSArray*)getChildKeysInNode:(NSString*)item
 {
-    NSMutableArray* domains = [[NSMutableArray alloc]init];
-    if(item) [LibOC traverseParentItemsForItem:(id)item inOutlineView:_outlineView forDomain:domains];
-    NSDictionary* childs =  [_dic objectForKey:@"Childs"];
-    if(domains.count>0)
+    NSMutableArray* array = [NSMutableArray array];
+    NSMutableString* path = [NSMutableString string];
+    NSMutableDictionary* node = [self getNode:item withPath:path];
+    NSArray* keys = [[node objectForKey:@"Childs"] allKeys];
+    for(NSString* key in keys)
     {
-        for(NSString* str in domains)
-        {
-            NSDictionary* node = [childs objectForKey:str];
-            childs = [node objectForKey:@"Childs"];
-        }
+        NSString *fullpath = [path stringByAppendingPathComponent:key];
+        [array addObject:fullpath];
     }
-    return [childs allKeys];
+    return array ;
 }
 
-- (NSInteger)getSubsCountInDirTree:(NSString*)item
+- (NSInteger)getChildCountInNode:(NSString*)item
 {
-    NSMutableArray* domains = [[NSMutableArray alloc]init];
-    if(item) [LibOC traverseParentItemsForItem:(id)item inOutlineView:_outlineView forDomain:domains];
-    NSDictionary* childs =  [_dic objectForKey:@"Childs"];
-    if(domains.count>0)
-    {
-        for(NSString* str in domains)
-        {
-            NSDictionary* node = [childs objectForKey:str];
-            childs = [node objectForKey:@"Childs"];
-        }
-    }
+    NSArray* childs = [self getChildKeysInNode:item];
     return [childs count];
 }
 
-- (NSMutableDictionary*)getNode:(NSString*)item
+- (NSMutableDictionary*)getNode:(NSString*)item withPath:(NSMutableString*)path
 {
-    NSMutableArray* domains = [[NSMutableArray alloc]init];
-    if(item) [LibOC traverseParentItemsForItem:(id)item inOutlineView:_outlineView forDomain:domains];
     NSMutableDictionary* node = nil;
-    if([item isEqualToString:@"__System__"])
+    if(!item || item.length ==0)
     {
-        node =  _dic;
+        node = _dic;
     }
-    else if(domains.count>0)
+    else
     {
-        NSMutableDictionary* childs = [_dic objectForKey:@"Childs"];
-        for(NSString* str in domains)
+        if([[item pathComponents]count]>0)
         {
-            node = [childs objectForKey:str];
-            childs = [node objectForKey:@"Childs"];
+            node = [self _getNode:item inNode:_dic withPath:path];
         }
     }
     return node;
+}
+
+- (NSMutableDictionary*)_getNode:(NSString*)item inNode:(NSMutableDictionary*)parent withPath:(NSMutableString*)path
+{
+    NSDictionary* childs = [parent objectForKey:@"Childs"];
+    NSArray* keys = [childs allKeys];
+    NSMutableDictionary* find = nil;
+    for(NSString* key in keys)
+    {
+        NSString *key2 = [key stringByAppendingString:@"/"];
+        if([item hasPrefix:key2] || [item isEqualToString:key])
+        {
+            NSString *pathString = item;
+            NSArray *pathComponents = [pathString pathComponents];
+            NSInteger keyPathComponentCount = [[key pathComponents] count];
+            NSRange range = NSMakeRange(keyPathComponentCount,[pathComponents count]-keyPathComponentCount);
+            NSArray *remainingComponents = [pathComponents subarrayWithRange:range];
+            NSString *nextItem = [NSString pathWithComponents:remainingComponents];
+            NSMutableDictionary* nextNode = [childs objectForKey:key];
+            NSString* nextPath = [path stringByAppendingPathComponent:key];
+            [path setString:nextPath];
+            if([[nextItem pathComponents]count] >= 1)
+            {
+                find = [self _getNode:nextItem inNode:nextNode withPath:path];
+            }
+            else if([[nextItem pathComponents]count] == 0)
+            {
+                find = nextNode;
+            }
+        }
+        if(find)
+        {
+            break;
+        }
+    }
+    return find;
+}
+
+- (void)removeNode:(NSString*)item inParent:(NSString*)parentItem
+{
+    NSMutableDictionary* parent = [self getNode:parentItem withPath:[NSMutableString string]];
+    NSInteger parentParts = [[parentItem pathComponents] count];
+    NSInteger nodeParts = [[item pathComponents] count];
+    NSRange range = NSMakeRange(parentParts,nodeParts - parentParts);
+    NSArray *remain = [[item pathComponents] subarrayWithRange:range];
+    NSString *shortName = [NSString pathWithComponents:remain];
+    NSMutableDictionary* childs = [LibData safeDict:parent forKey:@"Childs"];
+    [childs removeObjectForKey:shortName];
+    [self save];
 }
 
 + (NSMutableDictionary*)safeDict:(NSMutableDictionary*)node forKey:(NSString*)key
@@ -201,7 +234,7 @@
 
 - (NSString*)getNodeProperty:(NSString*)item forKey:(NSString*)key withValue:(NSString*)defaultValue
 {
-    NSMutableDictionary* node = [self getNode:item];
+    NSMutableDictionary* node = [self getNode:item withPath:[NSMutableString string]];
     NSString* value = nil;
     if(node)
     {
@@ -217,7 +250,7 @@
 
 - (void)saveNodeProperty:(NSString*)item forKey:(NSString*)key withValue:(NSString*)value
 {
-    NSMutableDictionary* node = [self getNode:item];
+    NSMutableDictionary* node = [self getNode:item withPath:[NSMutableString string]];
     if(node)
     {
         NSMutableDictionary* property = [LibData safeDict:node forKey:@"Property"];
@@ -237,6 +270,51 @@
     [_dic writeToFile:_file atomically:false];
 }
 
+///遍历
+-(void)traverse:(NSString*)item useBlock:(void(^)(NSString*,NSString*))block
+{
+    NSString* fullPath = [NSString string];
+    NSString* path = [NSString string];
+    BOOL find = NO;
+    [self _traverse:_dic useBlock:block forItem:(NSString*)item withFullPath:fullPath withPath:path withFind:&find];
+}
+
+-(void)_traverse:(NSDictionary*)dic
+        useBlock:(void(^)(NSString*,NSString*))block
+         forItem:(NSString*)item
+    withFullPath:(NSString*)fullPath
+        withPath:(NSString*)simplePath
+        withFind:(BOOL*)find;
+{
+    NSDictionary* childs = [dic objectForKey:@"Childs"];
+    NSArray* keys = [childs allKeys];
+    for(NSString* key in keys)
+    {
+        NSString* nowFullPath = [fullPath stringByAppendingPathComponent: key];
+        NSString* nowSimplePath = [simplePath stringByAppendingPathComponent:[key lastPathComponent]];
+        if((!*find) && (item==nil || item == nowFullPath))
+        {
+            *find = YES;
+        }
+        if(find)
+            block(nowFullPath,nowSimplePath);
+        NSDictionary* node = [childs objectForKey:key];
+        if(node)
+        {
+            [self _traverse:node
+                   useBlock:block
+                    forItem:item
+               withFullPath:nowFullPath
+                   withPath:nowSimplePath
+                   withFind:find
+            ];
+        }
+        if((*find) && item == nowFullPath)
+        {
+            *find = NO;
+        }
+    }
+}
 
 
 

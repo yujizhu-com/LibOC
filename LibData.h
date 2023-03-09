@@ -36,9 +36,14 @@
 - (BOOL)saveString:(NSString*)value withKey:(NSString*)key inDic:(NSString*)dic;
 - (void)saveDirTreeWithPath:(NSString*)path InDic:(NSString*)dic;
 - (void)addFilesFromFolder:(NSString *)folderPath toDictionary:(NSMutableDictionary *)dictionary;
-- (NSArray*)getSubsInDirTree:(NSString*)item;
-- (NSInteger)getSubsCountInDirTree:(NSString*)item ;
-- (NSMutableDictionary*)getNode:(NSString*)item;
+- (NSArray*)getChildKeysInNode:(NSString*)item;
+- (NSInteger)getChildCountInNode:(NSString*)item ;
+- (NSMutableDictionary*)getNode:(NSString*)item
+                       withPath:(NSMutableString*)path;
+- (void)removeNode:(NSString*)item inParent:(NSString*)parentItem;
+- (NSMutableDictionary*)_getNode:(NSString*)item
+                          inNode:(NSMutableDictionary*)dic
+                        withPath:(NSMutableString*)path;
 - (NSString*)getNodeProperty:(NSString*)item
                       forKey:(NSString*)key
                    withValue:(NSString*)defaultValue;
@@ -47,6 +52,15 @@
 ///另存为
 - (void)saveTo:(NSString*)file;
 - (void)save;
+///遍历
+-(void)traverse:(NSString*)item
+              useBlock:(void(^)(NSString*,NSString*))block;
+-(void)_traverse:(NSDictionary*)dic
+        useBlock:(void(^)(NSString*,NSString*))block
+         forItem:(NSString*)item
+    withFullPath:(NSString*)fullpath
+        withPath:(NSString*)simplepath
+        withFind:(BOOL*)find;
 
 + (NSMutableDictionary*)safeDict:(NSMutableDictionary*)node forKey:(NSString*)key;
 + (NSMutableArray*)safeArray:(NSMutableDictionary*)node forKey:(NSString*)key;

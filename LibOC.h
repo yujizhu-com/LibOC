@@ -27,9 +27,14 @@
 +(void)fillImage:(NSImageView*)imageView andLabel:(NSTextField*)label ByUrl:(NSString*)url;
 +(void)traverseParentItemsForItem:(id)item inOutlineView:(NSOutlineView *)outlineView forDomain:(NSMutableArray*)domains;
 +(NSString*)pathForItem:(id)item inOutlineView:(NSOutlineView *)outlineView;
-+(void)traverseOutlineView:(NSOutlineView *)outlineView usingBlock:(void(^)(NSOutlineView*,id item))block ;
-+(void)traverseItem:(id)item inView:(NSOutlineView *)outlineView usingBlock:(void(^)(NSOutlineView*,id item))block;
-
++(NSString*)fileForItem:(id)item inOutlineView:(NSOutlineView *)outlineView;
++(void)traverseOutlineView:(NSOutlineView *)outlineView usingBlock:(void(^)(NSOutlineView*,id))block ;
++(void)traverseItem:(id)item inView:(NSOutlineView *)outlineView usingBlock:(void(^)(NSOutlineView*,id))block;
++(void)getIndex:(NSInteger*)index andParent:(NSMutableString*)parent andItem:(NSMutableString*)item
+  ByOutlineView:(NSOutlineView*)view;
++(NSString*)getSelectedItem:(NSOutlineView*)view;
++(void)checkDirExistForTextField:(NSTextField*)field;
++(void)setCombobox:(NSComboBox*)box withItems:(NSArray*)items atItem:(NSString*)item;
 @end
 
 
