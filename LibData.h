@@ -47,7 +47,7 @@
 - (NSString*)getNodeProperty:(NSString*)item
                       forKey:(NSString*)key
                    withValue:(NSString*)defaultValue;
-- (void)saveNodeProperty:(NSString*)item forKey:(NSString*)key withValue:(NSString*)value;
+- (void)saveNodeProperty:(NSString*)item forKey:(NSString*)key withValue:(NSString*)value save:(BOOL)save;
 
 ///另存为
 - (void)saveTo:(NSString*)file;
@@ -72,8 +72,8 @@
 + (NSString*) getTempPath;
 + (NSString*) getUserDefaultFile;
 + (NSString*) getLogFile;
-+ (NSInteger) getByteOfFile:(NSString *)file;
-+ (NSString*) getAutoSizeOfFile:(NSString *)file;
++ (NSInteger) getByteOfFile:(NSArray *)files;
++ (NSString*) getAutoSizeOfFiles:(NSArray *)file;
 + (NSArray*) getFiles:(NSString *)path
  andIgnoreHidden:(BOOL)ignore
            withSuffix:(NSArray*)suffixes

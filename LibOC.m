@@ -72,7 +72,7 @@
 +(void)fillImage:(NSImageView*)imageView andLabel:(NSTextField*)label ByUrl:(NSString*)url
 {
     if(imageView) imageView.image = [[NSImage alloc] initWithContentsOfFile:url];
-    NSString *str = [LibData getAutoSizeOfFile:url];
+    NSString *str = [LibData getAutoSizeOfFiles:@[url]];
     [label setStringValue:str];
 }
 
@@ -170,10 +170,55 @@
     return nil;
 }
 
-+(void)checkDirExistForTextField:(NSTextField*)field
++(void)selectRow:(NSOutlineView*)view forItem:(NSString*)item
 {
-    NSString* path = [field stringValue];
-    
+    NSInteger count = [[item pathComponents] count];
+    for(int i=1;i<count;++i)
+    {
+        NSRange range = NSMakeRange(0,i);
+        NSArray *subCompos = [[item pathComponents] subarrayWithRange:range];
+        NSString *subPath = [NSString pathWithComponents:subCompos];
+        [view expandItem:subPath];
+    }
+    NSUInteger row = [view rowForItem:item];
+    [view selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:YES];
+}
+
++(void)expand:(NSOutlineView*)view forItem:(NSString*)item
+{
+    NSInteger count = [[item pathComponents] count];
+    for(int i=1;i<=count;++i)
+    {
+        NSRange range = NSMakeRange(0,i);
+        NSArray *subCompos = [[item pathComponents] subarrayWithRange:range];
+        NSString *subPath = [NSString pathWithComponents:subCompos];
+        [view expandItem:subPath];
+    }
+}
+
++(void)checkTextLegal:(NSString*)path forField:(NSTextField*)field isDir:(BOOL*)isDir isExist:(BOOL*)exist
+{
+    BOOL IsDir;
+    BOOL IsExist;
+    IsExist = [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&IsDir];
+    if(IsExist)
+    {
+        
+        if(IsDir)
+        {
+            [field setTextColor:NSColor.greenColor];
+        }
+        else
+        {
+            [field setTextColor:NSColor.whiteColor];
+        }
+    }
+    else
+    {
+        [field setTextColor:NSColor.redColor];
+    }
+    if(isDir)*isDir = IsDir;
+    if(exist)*exist = IsExist;
 }
 +(void)setCombobox:(NSComboBox*)box withItems:(NSArray*)items atItem:(NSString*)item
 {
@@ -193,5 +238,10 @@
     {
         [box selectItemWithObjectValue:item];
     }
+}
++(void)changeExeMod:(NSString*)exe
+{
+    
+    [[NSFileManager defaultManager] setAttributes:@{NSFilePosixPermissions: [NSNumber numberWithShort: 0755]} ofItemAtPath:exe error:nil];
 }
 @end

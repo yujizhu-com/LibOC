@@ -33,8 +33,11 @@
 +(void)getIndex:(NSInteger*)index andParent:(NSMutableString*)parent andItem:(NSMutableString*)item
   ByOutlineView:(NSOutlineView*)view;
 +(NSString*)getSelectedItem:(NSOutlineView*)view;
-+(void)checkDirExistForTextField:(NSTextField*)field;
++(void)selectRow:(NSOutlineView*)view forItem:(NSString*)item;
++(void)expand:(NSOutlineView*)view forItem:(NSString*)item;
++(void)checkTextLegal:(NSString*)text forField:(NSTextField*)field  isDir:(BOOL*)isDir isExist:(BOOL*)exist;
 +(void)setCombobox:(NSComboBox*)box withItems:(NSArray*)items atItem:(NSString*)item;
++(void)changeExeMod:(NSString*)exe;
 @end
 
 

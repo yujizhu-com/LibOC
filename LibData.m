@@ -248,7 +248,7 @@
     return value;
 }
 
-- (void)saveNodeProperty:(NSString*)item forKey:(NSString*)key withValue:(NSString*)value
+- (void)saveNodeProperty:(NSString*)item forKey:(NSString*)key withValue:(NSString*)value save:(BOOL)save
 {
     NSMutableDictionary* node = [self getNode:item withPath:[NSMutableString string]];
     if(node)
@@ -256,7 +256,10 @@
         NSMutableDictionary* property = [LibData safeDict:node forKey:@"Property"];
         [property setObject:value forKey:key];
     }
-    [self save];
+    if(save)
+    {
+        [self save];
+    }
 }
 
 ///另存为
@@ -292,11 +295,11 @@
     {
         NSString* nowFullPath = [fullPath stringByAppendingPathComponent: key];
         NSString* nowSimplePath = [simplePath stringByAppendingPathComponent:[key lastPathComponent]];
-        if((!*find) && (item==nil || item == nowFullPath))
+        if((!*find) && (item==nil || [item isEqualToString:nowFullPath]))
         {
             *find = YES;
         }
-        if(find)
+        if(*find)
             block(nowFullPath,nowSimplePath);
         NSDictionary* node = [childs objectForKey:key];
         if(node)
@@ -309,7 +312,7 @@
                    withFind:find
             ];
         }
-        if((*find) && item == nowFullPath)
+        if((*find) && [item isEqualToString:nowFullPath])
         {
             *find = NO;
         }
@@ -392,23 +395,24 @@
     return fullPath;
 }
 
-+ (NSInteger)getByteOfFile:(NSString *)file
++ (NSInteger)getByteOfFile:(NSArray *)files
 {
-    BOOL isDirectory;
     NSInteger size = 0;
-    NSFileManager * manager = [NSFileManager defaultManager];
-    [manager fileExistsAtPath:file isDirectory:&isDirectory];
-    if (!isDirectory)
+    for(NSString* file in files)
     {
-        NSDictionary *dict = [manager attributesOfItemAtPath:file error:nil];
-        size += [dict fileSize];
+        BOOL isDir;
+        if ([[NSFileManager defaultManager] fileExistsAtPath:file isDirectory:&isDir] && !isDir)
+        {
+            NSDictionary *dict = [[NSFileManager defaultManager] attributesOfItemAtPath:file error:nil];
+            size += [dict fileSize];
+        }
     }
     return size;
 }
 
-+ (NSString*) getAutoSizeOfFile:(NSString *)file
++ (NSString*) getAutoSizeOfFiles:(NSArray *)files
 {
-    NSInteger B = [LibData getByteOfFile:file];
+    NSInteger B = [LibData getByteOfFile:files];
     NSInteger MB = B/1000000;
     NSInteger KB = B/1000.0;
     float r;
