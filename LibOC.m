@@ -244,4 +244,18 @@
     
     [[NSFileManager defaultManager] setAttributes:@{NSFilePosixPermissions: [NSNumber numberWithShort: 0755]} ofItemAtPath:exe error:nil];
 }
+
++(void)generatePath:(NSString*)path
+{
+    NSArray* pathCompos = [path pathComponents];
+    NSInteger count = [ pathCompos count];
+    for(int i=1;i<=count;++i)
+    {
+        NSRange range = NSMakeRange(0,i);
+        NSArray *subCompos = [pathCompos subarrayWithRange:range];
+        NSString *subPath = [NSString pathWithComponents:subCompos];
+        NSString* path = [NSString stringWithFormat:@"mkdir %@",subPath];
+        system([path UTF8String]);
+    }
+}
 @end

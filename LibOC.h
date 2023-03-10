@@ -38,6 +38,7 @@
 +(void)checkTextLegal:(NSString*)text forField:(NSTextField*)field  isDir:(BOOL*)isDir isExist:(BOOL*)exist;
 +(void)setCombobox:(NSComboBox*)box withItems:(NSArray*)items atItem:(NSString*)item;
 +(void)changeExeMod:(NSString*)exe;
++(void)generatePath:(NSString*)path;
 @end
 
 
