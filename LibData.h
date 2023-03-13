@@ -10,10 +10,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-#define ShellDir "/Users/yujizhu/Documents/Git/GithubShell"
-
-#define CC_DEPRECATED_ATTRIBUTE __attribute__((deprecated))
-
 @interface LibData : NSObject
 {}
 @property (strong) NSMutableDictionary* dic ;
@@ -62,16 +58,10 @@
         withPath:(NSString*)simplepath
         withFind:(BOOL*)find;
 
+
++ (LibData*) libDataWithFile:(NSString*)file;
 + (NSMutableDictionary*)safeDict:(NSMutableDictionary*)node forKey:(NSString*)key;
 + (NSMutableArray*)safeArray:(NSMutableDictionary*)node forKey:(NSString*)key;
-+ (LibData*) libDataWithFile:(NSString*)file;
-+ (NSString*) getPathInWrite:(NSString*)subPath;
-+ (NSString*) getDataPath CC_DEPRECATED_ATTRIBUTE;
-+ (NSString*) getBundle;
-+ (NSString*) getWritePath;
-+ (NSString*) getTempPath;
-+ (NSString*) getUserDefaultFile;
-+ (NSString*) getLogFile;
 + (NSInteger) getByteOfFile:(NSArray *)files;
 + (NSString*) getAutoSizeOfFiles:(NSArray *)file;
 + (NSArray*) getFiles:(NSString *)path
@@ -82,15 +72,5 @@
 
 @end
 
-@interface LibFile : NSObject
-- (instancetype)init;
-- (NSArray*) getFiles:(NSString *)path;
-- (NSInteger) getSubPathCount:(NSString *)path;
-
-@property (strong) NSArray* legalSuffixes;
-@property BOOL ignoreEmptyDir;
-@property BOOL ignoreHidden;
-
-@end
 
 #endif /* Data_h */
