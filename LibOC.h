@@ -39,6 +39,7 @@
 +(void)setCombobox:(NSComboBox*)box withItems:(NSArray*)items atItem:(NSString*)item;
 +(void)changeExeMod:(NSString*)exe;
 +(void)generatePath:(NSString*)path;
++(NSString*)getRelativeFromPath:(NSString*)path referTo:(NSString*)referPath;
 @end
 
 

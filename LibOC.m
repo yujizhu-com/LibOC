@@ -223,9 +223,10 @@
 +(void)setCombobox:(NSComboBox*)box withItems:(NSArray*)items atItem:(NSString*)item
 {
     [box removeAllItems];
-    [box addItemsWithObjectValues:items];
     [box setEditable:NO];
     [box setSelectable:NO];
+    if(!items.count) return;
+    [box addItemsWithObjectValues:items];
     NSInteger index = [items indexOfObject:item];
     if (index == NSNotFound) {
         index = 0;
@@ -257,5 +258,28 @@
         NSString* path = [NSString stringWithFormat:@"mkdir %@",subPath];
         system([path UTF8String]);
     }
+}
+
++(NSString*)getRelativeFromPath:(NSString*)path referTo:(NSString*)referPath
+{
+    NSArray* pathCompos = [path pathComponents];
+    NSArray* referCompos = [referPath pathComponents];
+    NSInteger index = 0;
+    NSInteger min = MIN([pathCompos count],[referCompos count]);
+    for(int i=0; i<min;++i)
+    {
+        if([[pathCompos objectAtIndex:i] isEqualToString:[referCompos objectAtIndex:i]])
+        {
+            index = i;
+        }
+        else
+        {
+            break;
+        }
+    }
+    NSRange range = NSMakeRange(index+1, [referCompos count]-index);
+    NSArray *pathRemain = [pathCompos subarrayWithRange:range];
+    NSString *pr = [NSString pathWithComponents:pathRemain];
+    return pr;
 }
 @end
